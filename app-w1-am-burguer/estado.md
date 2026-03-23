@@ -51,139 +51,67 @@ Fecha: [DD/MM/AAAA] - Actualiza la fecha de trabajo
 
 # estado.md — AM Burguer MVP
 # Estado del Proyecto
-# Última actualización: Sesión 1 | Motor: Supabase (PostgreSQL)
-
----
+# Última actualización: Sesión 2
 
 ## RESUMEN EJECUTIVO
-
-El proyecto está en **fase de diseño y prototipado**. La arquitectura de datos está definida, los flujos de negocio están documentados y el primer artefacto visual (Formulario del Cliente) está construido con datos y fotos reales del negocio.
-
----
+Dos pantallas prototipadas. Flujo de roles definido y corregido.
+Siguiente prioridad: Pantalla de Cocina + crear base de datos en Supabase.
 
 ## PANTALLAS DEL MVP
 
 | Pantalla | Estado | Notas |
 |---|---|---|
-| Formulario del cliente | ✅ Prototipo v2 construido | Con fotos reales, precios 2026, personalización |
-| Caja Rápida (Andrea - presencial) | 🔴 Pendiente — Sesión 2 | Prioridad alta: es la pantalla más usada en operación |
-| Panel de Andrea | ⬜ Pendiente | Depende de Caja Rápida |
-| Pantalla de cocina | ⬜ Pendiente | |
+| Formulario del cliente | ✅ Prototipo v2 | Con fotos reales, precios 2026, personalización |
+| Caja Rápida | ✅ Prototipo v1 | Andrea toma pedidos presenciales — van directo a cocina |
+| Pantalla de cocina | 🔴 Pendiente Sesión 3 | Bloqueante: sin esta pantalla el flujo no cierra |
+| Panel de Andrea | ⬜ Pendiente | Depende de pantalla cocina |
 | Pantalla del domiciliario | ⬜ Pendiente | |
 | Panel de Andrés / Cierre de caja | ⬜ Pendiente | |
 
----
-
 ## ARCHIVOS DEL PROYECTO
 
-| Archivo | Versión | Estado | Ubicación |
-|---|---|---|---|
-| `schema.md` | v0.4 | ✅ Aprobado | `database/schema.md` |
-| `product.md` | v0.3 | ✅ Aprobado | `docs/product.md` |
-| `operational_flow.md` | v0.3 | ✅ Aprobado | `context/operational_flow.md` |
-| `business_context.md` | v0.1 | ✅ Sin cambios | `context/business_context.md` |
-| `technical_context.md` | v0.2 | ✅ Actualizado | `context/technical_context.md` |
-| `estado.md` | v0.1 | ✅ Este archivo | `logs/estado.md` |
-| `formulario-cliente-v2.html` | v2.0 | ✅ Prototipo listo | `assets/ui_mockups/` |
-
----
-
-## BASE DE DATOS — TABLAS DEFINIDAS
-
-| Tabla | Estado | Notas |
+| Archivo | Versión | Estado |
 |---|---|---|
-| `clientes` | ✅ Definida | Incluye `total_pedidos` y reconocimiento por celular |
-| `pedidos` | ✅ Definida | Incluye `pedido_origen` para distinguir canal |
-| `items_pedido` | ✅ Definida | Extras y exclusiones como texto libre |
-| `productos` | ✅ Definida | Menú real de AM Burguer con precios 2026 |
-| `metodos_pago` | ✅ Definida | Dinámica — Andrés gestiona sin código |
-| `domiciliarios` | ✅ Definida | Con celular para login |
-| `pagos` | ✅ Definida | Con comprobante_url para Supabase Storage |
-| `historial_modificaciones` | ✅ Definida | Trazabilidad completa de cambios de Andrea |
-| `tickets_comanda` | ✅ Definida | Código AM-XXXX para seguimiento |
-| `configuracion` | ✅ Definida | Costo domicilio, horarios, umbral cliente frecuente |
-
-> ⚠️ Las tablas están definidas en schema.md pero **NO están creadas en Supabase todavía**. Ese paso es Sesión 2 o 3.
-
----
+| schema.md | v0.4 | ✅ Aprobado |
+| estado.md | v0.2 | ✅ Este archivo |
+| formulario-cliente-v2.html | v2.0 | ✅ Prototipo listo |
+| caja-rapida-v1.html | v1.0 | ✅ Prototipo listo |
 
 ## DECISIONES TOMADAS
 
-| Decisión | Detalle |
+| # | Decisión |
 |---|---|
-| Motor de base de datos | Supabase (PostgreSQL) — free tier |
-| Número de pedido | Consecutivo global, nunca se reinicia. Formato: AM-XXXX |
-| Identificación de cliente | Por número de celular — sin cuenta ni contraseña |
-| Pantalla presencial | Caja Rápida separada del formulario del cliente |
-| Costo domicilio | Configurable por Andrés desde tabla `configuracion` — sin tocar código |
-| Cliente frecuente | Auto-marcado cuando `total_pedidos >= 5` (configurable) |
-| Extras | Cobran $3.000 c/u — texto libre en MVP |
-| Fase 2 | WhatsApp Business API — fuera del MVP actual |
+| DEC-001 | Supabase como motor de base de datos |
+| DEC-002 | Número de pedido consecutivo global, formato AM-XXXX |
+| DEC-003 | Cliente se identifica por número de celular |
+| DEC-004 | Caja Rápida como pantalla separada del formulario |
+| DEC-005 | Costo domicilio configurable desde tabla configuracion |
+| DEC-006 | Cliente frecuente auto-marcado al llegar a 5 pedidos |
+| DEC-007 | Extras cuestan $3.000 c/u |
+| DEC-008 | Pedido de Caja Rápida va directo a en_cocina |
+| DEC-009 | Andrea NO puede marcar listo — solo la cocinera puede |
 
----
+## ROLES Y ACCIONES POR PANTALLA
 
-## MENÚ REAL — PRECIOS 2026
+| Pantalla | Quién | Puede hacer |
+|---|---|---|
+| Formulario cliente | Cliente | Crear pedido |
+| Caja Rápida | Andrea | Crear pedido presencial, confirmar entrega |
+| Pantalla cocina | Cocinera | Ver comandas, marcar listo |
+| Pantalla domiciliario | Domiciliario | Ver pedidos listos, confirmar entrega |
+| Panel Andrés | Andrés | Ver resumen del día, cierre de caja |
 
-### Hamburguesas
-| Producto | Precio |
-|---|---|
-| Clásica | $14.000 |
-| Doble Carne | $18.000 |
-| Burger Pollo | $14.000 |
-| BBQ | $19.000 |
-| Mex | $19.000 |
-| Cheese | $19.000 |
-| Pepperoni | $19.000 |
-
-### Perros
-| Producto | Precio |
-|---|---|
-| Hot Dog | $9.000 |
-| Mr Dog | $11.000 |
-| Choriperro | $11.000 |
-
-### Especiales
-| Producto | Precio |
-|---|---|
-| Salchipapa | $16.000 |
-| Mazorcada | $24.000 |
-| Choripapa | $24.000 |
-| Adición | $3.000 |
-
-### Bebidas y Combos
-| Producto | Precio |
-|---|---|
-| Bebida personal | $3.500 |
-| Bebida familiar | $7.000 |
-| Papa francesa | $3.000 |
-| Combo personal (bebida + papa) | $6.500 |
-| Combo Pareja | $38.000 |
-| Promo KJ | $68.000 |
-
----
-
-## PRÓXIMA SESIÓN — SESIÓN 2
-
-### Objetivos
-1. **Construir la Caja Rápida** — pantalla de Andrea para pedidos presenciales
-2. **Crear las tablas en Supabase** — pasar del diseño a la base de datos real
-3. **Conectar el formulario del cliente a Supabase** — primer flujo funcional de extremo a extremo
+## PRÓXIMA SESIÓN — SESIÓN 3
 
 ### Orden sugerido
-```
-1. Caja Rápida (artefacto visual)
+1. Pantalla de Cocina (cocinera marca listo → Andrea recibe notificación)
 2. Crear proyecto en Supabase + tablas
 3. Seed data: productos y configuración inicial
-4. Conectar formulario → Supabase (insertar pedido real)
-```
-
----
 
 ## RIESGOS IDENTIFICADOS
 
 | Riesgo | Nivel | Mitigación |
 |---|---|---|
-| Supabase free tier tiene límites de conexiones concurrentes | 🟡 Medio | Suficiente para el MVP (50-70 pedidos/noche) |
-| Formulario del cliente no tiene validación de horario | 🟡 Medio | Agregar en Sesión 2 con campo `horario_cierre` de `configuracion` |
-| Sin autenticación aún — cualquiera puede abrir el panel de Andrea | 🔴 Alto | Resolver antes de lanzar a producción |
-| Reconocimiento de cliente recurrente no está conectado a BD todavía | 🟡 Medio | Está en el prototipo como simulación — se activa al conectar Supabase |
+| Sin autenticación — cualquiera puede abrir cualquier pantalla | 🔴 Alto | Resolver antes de producción |
+| Ninguna pantalla conectada a BD todavía | 🟡 Medio | Sesión 3 |
+| Formulario cliente sin validación de horario | 🟡 Medio | Agregar con campo horario_cierre de configuracion |
