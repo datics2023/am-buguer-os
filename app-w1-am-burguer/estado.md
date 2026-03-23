@@ -1,7 +1,6 @@
 # Instrucciones del archivo estado 
 - Genera el resumen de esta sesión para pegar en el archivo decisions.md
 - Documentame los errores y su solución para el archivo errors.md
-- Lee el 
 
 # Flujo real de trabajo:
 1. Abres chat nuevo (Usuario)
@@ -12,42 +11,39 @@
 6. Recordar al usuario este flujo al terminar la sesion 
 
 # AM Burguer — Estado del Proyecto
-Fecha: [DD/MM/AAAA] - Actualiza la fecha de trabajo
+Fecha: 23/03/2026
 
 ## Dónde estamos
-<!-- Una línea: qué fue lo último que hicimos -->
+Caja Rápida v1 construida. Flujo de roles corregido: solo cocina puede marcar listo.
 
-# Ejemplo:
 ## Pantallas
 | Pantalla              | Estado |
 |-----------------------|--------|
-| Formulario cliente    | ⬜ Pendiente |
+| Formulario cliente    | ✅ Prototipo v2 (Sesión 1) |
+| Caja Rápida           | ✅ Prototipo v1 (Sesión 2) |
+| Pantalla cocina       | 🔴 Pendiente — Sesión 3 (bloqueante del flujo) |
 | Panel Andrea          | ⬜ Pendiente |
-| Pantalla cocina       | ⬜ Pendiente |
 | Pantalla domiciliario | ⬜ Pendiente |
 | Cierre de caja        | ⬜ Pendiente |
 
-<!-- Estados posibles: ✅ Hecho · 🔨 En progreso · ⬜ Pendiente -->
-
 ## Último código trabajado
-<!-- Archivo o componente en el que estábamos -->
-
+caja-rapida-v1.html
 
 ## Bloqueantes actuales
-<!-- Qué no funciona o qué nos detuvo. Si no hay, escribe "Ninguno" -->
-
+- Pantalla de cocina no existe → flujo en_cocina → listo no cierra
+- Ninguna pantalla está conectada a Supabase todavía
 
 ## Objetivo de esta sesión
-<!-- Qué queremos lograr hoy -->
-
+(completar al abrir Sesión 3)
 
 ## Stack actual
-<!-- Qué herramientas estamos usando -->
-
+HTML + CSS + JS vanilla | Supabase (pendiente de crear proyecto)
 
 ## Links útiles
-- App: 
-- Base de datos:
+- App: (pendiente)
+- Base de datos: (pendiente — crear en supabase.com)
+
+---
 
 # estado.md — AM Burguer MVP
 # Estado del Proyecto
