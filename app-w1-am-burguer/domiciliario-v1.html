@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AM Burguer — Domiciliario</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1D1D1D; color: #fff; font-family: system-ui, sans-serif; min-height: 100vh; }
+
+  .header { background: #9B59B6; padding: 16px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header-sub { font-size: 12px; color: #ddd; margin-top: 2px; }
+  .badge { background: #fff; color: #9B59B6; border-radius: 20px; padding: 4px 12px; font-size: 13px; font-weight: 700; }
+
+  .lista { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+  .card { background: #2A2A2A; border-radius: 12px; overflow: hidden; border-left: 4px solid #9B59B6; }
+
+  .card-header { padding: 14px; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
+  .card-numero { font-size: 18px; font-weight: 700; color: #F4A261; }
+  .card-cliente { font-size: 15px; color: #fff; margin-top: 4px; }
+  .card-dir { font-size: 13px; color: #AAAAAA; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+  .card-tiempo { font-size: 11px; color: #AAAAAA; }
+  .card-total { font-size: 16px; font-weight: 700; color: #F4A261; }
+
+  .chevron { font-size: 18px; color: #AAAAAA; transition: transform 0.2s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .card-detalle { display: none; padding: 0 14px 14px; border-top: 1px solid #333; }
+  .card-detalle.open { display: block; }
+
+  .detalle-items { margin: 12px 0 8px; }
+  .detalle-item { padding: 6px 0; border-bottom: 1px solid #333; font-size: 13px; display: flex; justify-content: space-between; }
+  .detalle-item:last-child { border-bottom: none; }
+  .detalle-item-nombre { color: #fff; }
+  .detalle-nota { font-size: 12px; color: #AAAAAA; margin-top: 2px; }
+  .detalle-item-precio { color: #F4A261; }
+
+  .info-row { display: flex; gap: 10px; margin: 10px 0; }
+  .info-box { flex: 1; background: #1D1D1D; border-radius: 8px; padding: 10px; }
+  .info-box span { display: block; font-size: 11px; color: #AAAAAA; margin-bottom: 4px; }
+  .info-box strong { font-size: 14px; color: #fff; }
+
+  .btn-entregar { width: 100%; padding: 16px; border-radius: 8px; border: none; background: #2ECC71; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 12px; transition: opacity 0.2s; }
+  .btn-entregar:active { opacity: 0.8; }
+  .btn-entregar:disabled { background: #555; cursor: not-allowed; }
+
+  .btn-tel { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #9B59B6; background: transparent; color: #9B59B6; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; text-decoration: none; }
+
+  .empty { text-align: center; padding: 80px 20px; color: #AAAAAA; }
+  .empty-icon { font-size: 56px; margin-bottom: 16px; }
+  .empty p { font-size: 16px; }
+  .empty small { font-size: 13px; margin-top: 8px; display: block; }
+
+  .loading { text-align: center; padding: 60px 20px; color: #AAAAAA; }
+  .spinner { display: inline-block; width: 36px; height: 36px; border: 3px solid #333; border-top-color: #9B59B6; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2ECC71; color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+  .toast.error { background: #E74C3C; }
+
+  .refresh-btn { background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; padding: 4px; }
+
+  .notas-box { background: #1D1D1D; border-radius: 8px; padding: 10px; margin: 8px 0; font-size: 13px; color: #AAAAAA; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🛵 Domiciliario</h1>
+    <div class="header-sub" id="ultimo-refresh">Cargando...</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="badge" id="badge-count">0</div>
+    <button class="refresh-btn" onclick="cargarPedidos()">↻</button>
+    <button onclick="cerrarSesion()" style="background:#7d0000;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600">Salir</button>
+  </div>
+</div>
+
+<div class="lista" id="lista-pedidos">
+  <div class="loading"><div class="spinner"></div><br>Conectando...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="auth-guard.js"></script>
+<script>
+const SUPABASE_URL = 'https://ezvjjudhvothkiqyfxtl.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6dmpqdWRodm90aGtpcXlmeHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjk4ODYsImV4cCI6MjA5MDgwNTg4Nn0.rMLPardNjEIoXkvQIPRxAXjjATBKBUwnPm67oU1ZjM8';
+
+let pedidos = [];
+
+const headers = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=representation'
+};
+
+async function supabase(endpoint, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, { headers, ...options });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+async function cargarPedidos() {
+  try {
+    const data = await supabase(
+      'pedidos?select=*,clientes(nombre,apellido,celular),items_pedido(*,productos(nombre)),metodos_pago(nombre)&estado=eq.en_entrega&tipo_entrega=eq.domicilio&order=hora_creacion.asc'
+    );
+    pedidos = data;
+    document.getElementById('badge-count').textContent = pedidos.length;
+    renderLista();
+    document.getElementById('ultimo-refresh').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'});
+  } catch(e) {
+    document.getElementById('lista-pedidos').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p style="color:#E74C3C">Error de conexión</p><small>${e.message}</small></div>`;
+  }
+}
+
+function renderLista() {
+  const lista = document.getElementById('lista-pedidos');
+
+  if (pedidos.length === 0) {
+    lista.innerHTML = `<div class="empty"><div class="empty-icon">🛵</div><p>Sin pedidos en camino</p><small>Aquí aparecerán los domicilios asignados</small></div>`;
+    return;
+  }
+
+  lista.innerHTML = pedidos.map(p => renderCard(p)).join('');
+}
+
+function renderCard(p) {
+  const cliente = p.clientes;
+  const nombre = cliente ? `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim() || 'Cliente' : 'Cliente';
+  const celular = cliente?.celular || '';
+  const items = p.items_pedido || [];
+  const tiempo = tiempoDesde(p.hora_creacion);
+
+  const itemsHtml = items.map(i => `
+    <div class="detalle-item">
+      <div>
+        <div class="detalle-item-nombre">${i.cantidad}x ${i.productos?.nombre || 'Producto'}</div>
+        ${i.extras ? `<div class="detalle-nota">+ ${i.extras}</div>` : ''}
+        ${i.exclusiones ? `<div class="detalle-nota">− ${i.exclusiones}</div>` : ''}
+      </div>
+      <div class="detalle-item-precio">${formatCOP(i.subtotal)}</div>
+    </div>
+  `).join('');
+
+  const telLink = celular
+    ? `<a class="btn-tel" href="tel:${celular}">📞 Llamar — ${celular}</a>`
+    : '';
+
+  return `
+  <div class="card" id="card-${p.id}">
+    <div class="card-header" onclick="toggleDetalle('${p.id}')">
+      <div>
+        <div class="card-numero">AM-${String(p.numero_pedido).padStart(4,'0')}</div>
+        <div class="card-cliente">${nombre}</div>
+        <div class="card-dir">📍 ${p.direccion_entrega || 'Sin dirección'}</div>
+        <div class="card-tiempo">${tiempo}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="card-total">${formatCOP(p.total)}</div>
+        <div class="chevron" id="chev-${p.id}">▼</div>
+      </div>
+    </div>
+    <div class="card-detalle" id="detalle-${p.id}">
+      <div class="detalle-items">${itemsHtml}</div>
+      <div class="info-row">
+        <div class="info-box"><span>Pago</span><strong>${p.metodos_pago?.nombre || '—'}</strong></div>
+        <div class="info-box"><span>Total</span><strong>${formatCOP(p.total)}</strong></div>
+      </div>
+      ${p.notas ? `<div class="notas-box">📝 ${p.notas}</div>` : ''}
+      ${telLink}
+      <button class="btn-entregar" onclick="marcarEntregado('${p.id}', event)">✓ Confirmar entrega</button>
+    </div>
+  </div>`;
+}
+
+function toggleDetalle(id) {
+  const detalle = document.getElementById(`detalle-${id}`);
+  const chev = document.getElementById(`chev-${id}`);
+  detalle.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+async function marcarEntregado(id, e) {
+  e.stopPropagation();
+  const btn = e.target;
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try {
+    await supabase(`pedidos?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ estado: 'entregado', hora_entrega: new Date().toISOString() })
+    });
+    mostrarToast('✓ Entrega confirmada');
+    await cargarPedidos();
+  } catch(err) {
+    mostrarToast('Error: ' + err.message, true);
+    btn.disabled = false;
+    btn.textContent = '✓ Confirmar entrega';
+  }
+}
+
+function formatCOP(valor) {
+  if (!valor) return '$0';
+  return '$' + Number(valor).toLocaleString('es-CO');
+}
+
+function tiempoDesde(iso) {
+  if (!iso) return '';
+  const mins = Math.floor((Date.now() - new Date(iso)) / 60000);
+  if (mins < 1) return 'Ahora';
+  if (mins < 60) return `hace ${mins} min`;
+  return `hace ${Math.floor(mins/60)}h ${mins%60}m`;
+}
+
+function mostrarToast(msg, error=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (error ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+cargarPedidos();
+setInterval(cargarPedidos, 20000);
+</script>
+</body>
+</html>

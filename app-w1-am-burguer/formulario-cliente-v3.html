@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AM Burguer — Haz tu pedido</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --rojo: #E63946;
+    --naranja: #F4A261;
+    --fondo: #111111;
+    --card: #1E1E1E;
+    --card2: #262626;
+    --borde: #333333;
+    --texto: #FFFFFF;
+    --gris: #888888;
+    --verde: #2ECC71;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--card);
+    border-bottom: 2px solid var(--rojo);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--rojo);
+    letter-spacing: 2px;
+  }
+  .logo span { color: var(--naranja); }
+  .cart-btn {
+    background: var(--rojo);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+  }
+  .cart-btn:hover { background: #c0303b; }
+  .cart-count {
+    background: white;
+    color: var(--rojo);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* PASOS */
+  .steps {
+    display: flex;
+    padding: 16px 20px 0;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .steps::-webkit-scrollbar { display: none; }
+  .step {
+    flex: 1;
+    min-width: 0;
+    height: 4px;
+    background: var(--borde);
+    border-radius: 2px;
+    transition: background 0.3s;
+  }
+  .step.active { background: var(--rojo); }
+  .step.done { background: var(--verde); }
+
+  /* SECCIONES */
+  .section { display: none; padding: 0 16px; }
+  .section.visible { display: block; }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    padding: 20px 0 12px;
+    color: var(--naranja);
+  }
+
+  /* CATEGORÍAS */
+  .cats {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 12px;
+  }
+  .cats::-webkit-scrollbar { display: none; }
+  .cat-btn {
+    background: var(--card2);
+    border: 1px solid var(--borde);
+    border-radius: 20px;
+    color: var(--gris);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .cat-btn.active {
+    background: var(--rojo);
+    border-color: var(--rojo);
+    color: white;
+  }
+
+  /* PRODUCTOS */
+  .productos-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 8px;
+  }
+  .producto-card {
+    background: var(--card);
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .producto-card:active { background: var(--card2); }
+  .producto-emoji {
+    font-size: 32px;
+    width: 48px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .producto-info { flex: 1; min-width: 0; }
+  .producto-nombre {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 2px;
+  }
+  .producto-desc {
+    font-size: 12px;
+    color: var(--gris);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .producto-precio {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--naranja);
+    flex-shrink: 0;
+  }
+  .loading-msg {
+    text-align: center;
+    color: var(--gris);
+    padding: 40px 0;
+    font-size: 14px;
+  }
+
+  /* CARRITO PANEL */
+  .carrito-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+  }
+  .carrito-overlay.open { display: flex; align-items: flex-end; }
+  .carrito-panel {
+    background: var(--card);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px 16px;
+  }
+  .carrito-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .carrito-titulo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: var(--naranja);
+  }
+  .close-btn {
+    background: var(--card2);
+    border: none;
+    color: var(--gris);
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .carrito-vacio {
+    text-align: center;
+    color: var(--gris);
+    padding: 40px 0;
+    font-size: 14px;
+  }
+  .carrito-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--borde);
+  }
+  .carrito-item-info { flex: 1; }
+  .carrito-item-nombre { font-weight: 600; font-size: 14px; }
+  .carrito-item-precio { font-size: 13px; color: var(--naranja); }
+  .qty-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .qty-btn {
+    background: var(--card2);
+    border: 1px solid var(--borde);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .qty-num { font-weight: 700; font-size: 15px; min-width: 20px; text-align: center; }
+  .carrito-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0 8px;
+    font-weight: 700;
+    font-size: 17px;
+  }
+  .carrito-total span { color: var(--naranja); font-size: 20px; }
+
+  /* STEP 2: ENTREGA */
+  .entrega-opts {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 0;
+  }
+  .entrega-card {
+    background: var(--card);
+    border: 2px solid var(--borde);
+    border-radius: 12px;
+    padding: 18px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .entrega-card.selected {
+    border-color: var(--rojo);
+    background: #2a1518;
+  }
+  .entrega-icon { font-size: 28px; }
+  .entrega-info { flex: 1; }
+  .entrega-label { font-weight: 700; font-size: 16px; }
+  .entrega-desc { font-size: 13px; color: var(--gris); margin-top: 2px; }
+  .entrega-precio { font-size: 13px; color: var(--naranja); font-weight: 600; }
+
+  .campo {
+    margin-top: 16px;
+  }
+  .campo label {
+    display: block;
+    font-size: 13px;
+    color: var(--gris);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .campo input, .campo textarea {
+    width: 100%;
+    background: var(--card2);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    padding: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .campo input:focus, .campo textarea:focus { border-color: var(--rojo); }
+  .campo textarea { resize: none; height: 80px; }
+  .campo input.error { border-color: var(--rojo); }
+
+  /* STEP 3: PAGO */
+  .pago-opts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px 0;
+  }
+  .pago-card {
+    background: var(--card);
+    border: 2px solid var(--borde);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .pago-card.selected {
+    border-color: var(--rojo);
+    background: #2a1518;
+  }
+  .pago-icon { font-size: 24px; }
+  .pago-nombre { font-weight: 600; font-size: 15px; }
+
+  /* STEP 4: CONFIRMAR */
+  .resumen-box {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 8px;
+    border: 1px solid var(--borde);
+  }
+  .resumen-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--borde);
+  }
+  .resumen-row:last-child { border-bottom: none; }
+  .resumen-row .label { color: var(--gris); }
+  .resumen-row .valor { font-weight: 600; }
+  .resumen-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 18px;
+    font-weight: 700;
+    padding-top: 12px;
+    margin-top: 8px;
+    border-top: 2px solid var(--borde);
+  }
+  .resumen-total span { color: var(--naranja); }
+
+  /* DATOS CLIENTE */
+  .datos-cliente {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    border: 1px solid var(--borde);
+  }
+  .datos-titulo {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: var(--naranja);
+  }
+
+  /* CERRADO */
+  #seccionCerrado {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+  }
+  #seccionCerrado.visible { display: block; }
+  .cerrado-icon { font-size: 72px; margin-bottom: 16px; }
+  .cerrado-titulo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 2px;
+    color: var(--rojo);
+    margin-bottom: 12px;
+  }
+  .cerrado-msg {
+    color: var(--gris);
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  /* ÉXITO */
+  #seccionExito {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  #seccionExito.visible { display: block; }
+  .exito-icon { font-size: 72px; margin-bottom: 16px; }
+  .exito-titulo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 2px;
+    color: var(--verde);
+    margin-bottom: 8px;
+  }
+  .exito-pedido {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    color: var(--naranja);
+    letter-spacing: 3px;
+    line-height: 1;
+    margin: 16px 0;
+  }
+  .exito-msg {
+    color: var(--gris);
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  /* BOTONES NAVEGACIÓN */
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--borde);
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+  }
+  .btn-back {
+    background: var(--card2);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    color: var(--gris);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 14px 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .btn-next {
+    flex: 1;
+    background: var(--rojo);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 14px;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+  }
+  .btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-next.loading { opacity: 0.7; pointer-events: none; }
+
+  /* ERROR TOAST */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #c0303b;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 300;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">AM <span>Burguer</span></div>
+  <button class="cart-btn" onclick="abrirCarrito()" id="cartBtn" style="display:none;">
+    🛒 Carrito <span class="cart-count" id="cartCount">0</span>
+  </button>
+</div>
+
+<!-- BARRA DE PASOS -->
+<div class="steps" id="stepsBar">
+  <div class="step active" id="step1"></div>
+  <div class="step" id="step2"></div>
+  <div class="step" id="step3"></div>
+  <div class="step" id="step4"></div>
+</div>
+
+<!-- ======================== SECCIÓN 1: MENÚ ======================== -->
+<div class="section visible" id="seccion1">
+  <div class="section-title">¿Qué vas a pedir?</div>
+  <div class="cats" id="categoriasBar"></div>
+  <div class="productos-grid" id="productosGrid">
+    <div class="loading-msg">Cargando menú…</div>
+  </div>
+</div>
+
+<!-- ======================== SECCIÓN 2: ENTREGA ======================== -->
+<div class="section" id="seccion2">
+  <div class="section-title">¿Cómo lo recibís?</div>
+  <div class="entrega-opts">
+    <div class="entrega-card" id="optDomicilio" onclick="selEntrega('domicilio')">
+      <div class="entrega-icon">🛵</div>
+      <div class="entrega-info">
+        <div class="entrega-label">Domicilio</div>
+        <div class="entrega-desc">Te lo llevamos a tu dirección</div>
+        <div class="entrega-precio" id="costoEnvioLabel">+ $3.000 envío</div>
+      </div>
+    </div>
+    <div class="entrega-card" id="optRecoger" onclick="selEntrega('recoger')">
+      <div class="entrega-icon">🏠</div>
+      <div class="entrega-info">
+        <div class="entrega-label">Recoger en el tráiler</div>
+        <div class="entrega-desc">Sin costo de envío</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="campoDireccion" style="display:none;">
+    <div class="campo">
+      <label>Dirección de entrega</label>
+      <input type="text" id="inputDireccion" placeholder="Ej: Calle 45 #12-30, Casa 3">
+    </div>
+    <div class="campo">
+      <label>Indicaciones adicionales (opcional)</label>
+      <textarea id="inputIndicaciones" placeholder="Ej: Portero, timbre 2, llamar al llegar…"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== SECCIÓN 3: PAGO ======================== -->
+<div class="section" id="seccion3">
+  <div class="section-title">¿Cómo pagás?</div>
+  <div class="pago-opts" id="pagosGrid">
+    <div class="loading-msg">Cargando métodos…</div>
+  </div>
+</div>
+
+<!-- ======================== SECCIÓN 4: CONFIRMAR ======================== -->
+<div class="section" id="seccion4">
+  <div class="section-title">Confirmar pedido</div>
+
+  <div class="resumen-box" id="resumenItems"></div>
+
+  <div class="datos-cliente">
+    <div class="datos-titulo">👤 Tus datos</div>
+    <div class="campo">
+      <label>Nombre</label>
+      <input type="text" id="inputNombre" placeholder="Tu nombre">
+    </div>
+    <div class="campo">
+      <label>Celular (WhatsApp)</label>
+      <input type="tel" id="inputTelefono" placeholder="3XX XXX XXXX">
+    </div>
+  </div>
+</div>
+
+<!-- ======================== SECCIÓN ÉXITO ======================== -->
+<div id="seccionExito">
+  <div class="exito-icon">🎉</div>
+  <div class="exito-titulo">¡Pedido recibido!</div>
+  <div class="exito-pedido" id="exitoNumero">AM-0001</div>
+  <div class="exito-msg" id="exitoMsg">Tu pedido ya está en cocina. Te avisamos cuando esté listo.</div>
+</div>
+
+<!-- SECCIÓN CERRADO -->
+<div id="seccionCerrado">
+  <div class="cerrado-icon">🔒</div>
+  <div class="cerrado-titulo">Estamos cerrados</div>
+  <div class="cerrado-msg">Por ahora no estamos tomando pedidos.<br>Volvemos pronto con las mejores hamburguesas 🍔<br><br>Domingos a sábados, 5pm – 10pm.</div>
+</div>
+
+<!-- CARRITO OVERLAY -->
+<div class="carrito-overlay" id="carritoOverlay" onclick="cerrarCarritoSiFuera(event)">
+  <div class="carrito-panel">
+    <div class="carrito-header">
+      <div class="carrito-titulo">Tu pedido</div>
+      <button class="close-btn" onclick="cerrarCarrito()">✕</button>
+    </div>
+    <div id="carritoContenido"></div>
+    <button class="btn-next" style="margin-top:8px;" onclick="irAEntrega()">Continuar →</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- NAV BAR -->
+<div class="nav-bar" id="navBar">
+  <button class="btn-back" id="btnBack" onclick="navBack()" style="display:none;">← Atrás</button>
+  <button class="btn-next" id="btnNext" onclick="navNext()">Ver carrito →</button>
+</div>
+
+<script>
+  // ==================== CONFIG ====================
+  const SUPABASE_URL = 'https://ezvjjudhvothkiqyfxtl.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6dmpqdWRodm90aGtpcXlmeHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjk4ODYsImV4cCI6MjA5MDgwNTg4Nn0.rMLPardNjEIoXkvQIPRxAXjjATBKBUwnPm67oU1ZjM8';
+
+  const H = { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+
+  async function sbGet(tabla, params = '') {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabla}?${params}`, { headers: H });
+    return r.json();
+  }
+  async function sbPost(tabla, data) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabla}`, {
+      method: 'POST',
+      headers: { ...H, 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    return r.json();
+  }
+  async function sbPatch(tabla, params, data) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabla}?${params}`, {
+      method: 'PATCH',
+      headers: { ...H, 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    return r.json();
+  }
+
+  // ==================== ESTADO ====================
+  let productos = [];
+  let metodosPago = [];
+  let carrito = []; // {id, nombre, precio, cantidad}
+  let entregaTipo = null; // 'domicilio' | 'recoger'
+  let pagoPid = null;
+  let pagoNombre = null;
+  let costoEnvio = 3000;
+  let paso = 1; // 1=menu 2=entrega 3=pago 4=confirm
+
+  const EMOJIS = { 'hamburguesa': '🍔', 'perro': '🌭', 'combo': '🍟', 'bebida': '🥤' };
+
+  function emoji(cat) {
+    if (!cat) return '🍔';
+    const c = cat.toLowerCase();
+    if (c.includes('hambur')) return '🍔';
+    if (c.includes('perro') || c.includes('dog')) return '🌭';
+    if (c.includes('combo') || c.includes('especial') || c.includes('papa')) return '🍟';
+    if (c.includes('bebida') || c.includes('gaseosa') || c.includes('agua') || c.includes('jugo')) return '🥤';
+    return '🍔';
+  }
+
+  // ==================== INIT ====================
+  async function init() {
+    // Verificar si tienda está abierta
+    try {
+      const estado = await sbGet('configuracion', 'clave=eq.tienda_abierta&select=valor');
+      if (estado && estado[0] && estado[0].valor === 'false') {
+        document.getElementById('stepsBar').style.display = 'none';
+        document.getElementById('navBar').style.display = 'none';
+        document.getElementById('cartBtn').style.display = 'none';
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+        document.getElementById('seccionCerrado').classList.add('visible');
+        return;
+      }
+    } catch(e) {}
+
+    // Cargar costo envío desde configuración
+    try {
+      const cfg = await sbGet('configuracion', 'clave=eq.costo_domicilio&select=valor');
+      if (cfg && cfg[0]) costoEnvio = parseInt(cfg[0].valor) || 3000;
+      document.getElementById('costoEnvioLabel').textContent = `+ $${costoEnvio.toLocaleString('es-CO')} envío`;
+    } catch(e) {}
+
+    // Cargar productos
+    try {
+      const data = await sbGet('productos', 'disponible=eq.true&order=categoria,nombre');
+      productos = data || [];
+      renderProductos();
+    } catch(e) {
+      document.getElementById('productosGrid').innerHTML = '<div class="loading-msg">Error cargando menú. Recarga la página.</div>';
+    }
+
+    // Cargar métodos de pago
+    try {
+      const data = await sbGet('metodos_pago', 'activo=eq.true');
+      metodosPago = data || [];
+    } catch(e) {}
+  }
+
+  // ==================== RENDER MENÚ ====================
+  function renderProductos(catFiltro = null) {
+    const grid = document.getElementById('productosGrid');
+    const catsBar = document.getElementById('categoriasBar');
+
+    // Categorías únicas
+    const cats = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
+
+    if (catsBar.children.length === 0) {
+      const allBtn = document.createElement('button');
+      allBtn.className = 'cat-btn active';
+      allBtn.textContent = 'Todos';
+      allBtn.onclick = () => { setActiveCat(null); renderProductos(null); };
+      catsBar.appendChild(allBtn);
+
+      cats.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'cat-btn';
+        btn.textContent = c;
+        btn.dataset.cat = c;
+        btn.onclick = () => { setActiveCat(c); renderProductos(c); };
+        catsBar.appendChild(btn);
+      });
+    }
+
+    const filtrados = catFiltro ? productos.filter(p => p.categoria === catFiltro) : productos;
+    grid.innerHTML = '';
+
+    filtrados.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'producto-card';
+      el.innerHTML = `
+        <div class="producto-emoji">${emoji(p.categoria)}</div>
+        <div class="producto-info">
+          <div class="producto-nombre">${p.nombre}</div>
+          ${p.descripcion ? `<div class="producto-desc">${p.descripcion}</div>` : ''}
+        </div>
+        <div class="producto-precio">$${parseInt(p.precio).toLocaleString('es-CO')}</div>
+      `;
+      el.onclick = () => agregarAlCarrito(p);
+      grid.appendChild(el);
+    });
+
+    if (filtrados.length === 0) {
+      grid.innerHTML = '<div class="loading-msg">No hay productos en esta categoría.</div>';
+    }
+  }
+
+  function setActiveCat(cat) {
+    document.querySelectorAll('.cat-btn').forEach(b => {
+      b.classList.toggle('active', cat === null ? b.textContent === 'Todos' : b.dataset.cat === cat);
+    });
+  }
+
+  // ==================== CARRITO ====================
+  function agregarAlCarrito(p) {
+    const ex = carrito.find(i => i.id === p.id);
+    if (ex) {
+      ex.cantidad++;
+    } else {
+      carrito.push({ id: p.id, nombre: p.nombre, precio: parseInt(p.precio), cantidad: 1 });
+    }
+    actualizarCartBtn();
+    mostrarToast(`${p.nombre} agregado ✓`);
+  }
+
+  function actualizarCartBtn() {
+    const total = carrito.reduce((s, i) => s + i.cantidad, 0);
+    document.getElementById('cartCount').textContent = total;
+    const btn = document.getElementById('cartBtn');
+    btn.style.display = total > 0 ? 'flex' : 'none';
+    document.getElementById('btnNext').disabled = total === 0;
+  }
+
+  function renderCarrito() {
+    const cont = document.getElementById('carritoContenido');
+    if (carrito.length === 0) {
+      cont.innerHTML = '<div class="carrito-vacio">Tu carrito está vacío</div>';
+      return;
+    }
+    let html = '';
+    carrito.forEach((item, i) => {
+      html += `
+        <div class="carrito-item">
+          <div class="carrito-item-info">
+            <div class="carrito-item-nombre">${item.nombre}</div>
+            <div class="carrito-item-precio">$${(item.precio * item.cantidad).toLocaleString('es-CO')}</div>
+          </div>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="cambiarCant(${i}, -1)">−</button>
+            <span class="qty-num">${item.cantidad}</span>
+            <button class="qty-btn" onclick="cambiarCant(${i}, 1)">+</button>
+          </div>
+        </div>`;
+    });
+    const subtotal = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+    html += `<div class="carrito-total"><span>Total</span><span>$${subtotal.toLocaleString('es-CO')}</span></div>`;
+    cont.innerHTML = html;
+  }
+
+  function cambiarCant(idx, delta) {
+    carrito[idx].cantidad += delta;
+    if (carrito[idx].cantidad <= 0) carrito.splice(idx, 1);
+    actualizarCartBtn();
+    renderCarrito();
+  }
+
+  function abrirCarrito() {
+    renderCarrito();
+    document.getElementById('carritoOverlay').classList.add('open');
+  }
+
+  function cerrarCarrito() {
+    document.getElementById('carritoOverlay').classList.remove('open');
+  }
+
+  function cerrarCarritoSiFuera(e) {
+    if (e.target === document.getElementById('carritoOverlay')) cerrarCarrito();
+  }
+
+  function irAEntrega() {
+    cerrarCarrito();
+    irAPaso(2);
+  }
+
+  // ==================== RENDER MÉTODOS DE PAGO ====================
+  function renderPagos() {
+    const grid = document.getElementById('pagosGrid');
+    if (metodosPago.length === 0) {
+      grid.innerHTML = '<div class="loading-msg">Error cargando métodos de pago.</div>';
+      return;
+    }
+    const pagoEmoji = { 'Nequi': '💜', 'Daviplata': '🟡', 'Llave': '🟡', 'Bancolombia': '🟡', 'Efectivo': '💵' };
+    grid.innerHTML = '';
+    metodosPago.forEach(m => {
+      const em = Object.keys(pagoEmoji).find(k => m.nombre.includes(k)) ? pagoEmoji[Object.keys(pagoEmoji).find(k => m.nombre.includes(k))] : '💳';
+      const el = document.createElement('div');
+      el.className = 'pago-card';
+      el.innerHTML = `<div class="pago-icon">${em}</div><div class="pago-nombre">${m.nombre}</div>`;
+      el.onclick = () => selPago(m.id, m.nombre, el);
+      grid.appendChild(el);
+    });
+  }
+
+  function selPago(id, nombre, el) {
+    pagoPid = id;
+    pagoNombre = nombre;
+    document.querySelectorAll('.pago-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('btnNext').disabled = false;
+  }
+
+  // ==================== ENTREGA ====================
+  function selEntrega(tipo) {
+    entregaTipo = tipo;
+    document.getElementById('optDomicilio').classList.toggle('selected', tipo === 'domicilio');
+    document.getElementById('optRecoger').classList.toggle('selected', tipo === 'recoger');
+    document.getElementById('campoDireccion').style.display = tipo === 'domicilio' ? 'block' : 'none';
+    document.getElementById('btnNext').disabled = false;
+  }
+
+  // ==================== RESUMEN ====================
+  function renderResumen() {
+    const subtotal = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+    const envio = entregaTipo === 'domicilio' ? costoEnvio : 0;
+    const total = subtotal + envio;
+
+    let html = '';
+    carrito.forEach(i => {
+      html += `<div class="resumen-row"><span class="label">${i.nombre} x${i.cantidad}</span><span class="valor">$${(i.precio * i.cantidad).toLocaleString('es-CO')}</span></div>`;
+    });
+    if (envio > 0) {
+      html += `<div class="resumen-row"><span class="label">Domicilio</span><span class="valor">$${envio.toLocaleString('es-CO')}</span></div>`;
+    }
+    html += `<div class="resumen-row"><span class="label">Pago</span><span class="valor">${pagoNombre}</span></div>`;
+    html += `<div class="resumen-row"><span class="label">Entrega</span><span class="valor">${entregaTipo === 'domicilio' ? '🛵 Domicilio' : '🏠 Recoger'}</span></div>`;
+    html += `<div class="resumen-total"><span>Total</span><span>$${total.toLocaleString('es-CO')}</span></div>`;
+
+    document.getElementById('resumenItems').innerHTML = html;
+  }
+
+  // ==================== NAVEGACIÓN ====================
+  function irAPaso(n) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+    document.getElementById(`seccion${n}`).classList.add('visible');
+    paso = n;
+
+    // Steps bar
+    for (let i = 1; i <= 4; i++) {
+      const s = document.getElementById(`step${i}`);
+      if (i < n) { s.className = 'step done'; }
+      else if (i === n) { s.className = 'step active'; }
+      else { s.className = 'step'; }
+    }
+
+    // Back btn
+    document.getElementById('btnBack').style.display = n > 1 ? 'block' : 'none';
+
+    // Next btn text + state
+    const btnNext = document.getElementById('btnNext');
+    btnNext.disabled = false;
+
+    if (n === 1) {
+      btnNext.textContent = 'Ver carrito →';
+      btnNext.disabled = carrito.reduce((s, i) => s + i.cantidad, 0) === 0;
+    } else if (n === 2) {
+      btnNext.textContent = 'Elegir pago →';
+      btnNext.disabled = !entregaTipo;
+      renderPagos();
+    } else if (n === 3) {
+      btnNext.textContent = 'Revisar pedido →';
+      btnNext.disabled = !pagoPid;
+    } else if (n === 4) {
+      btnNext.textContent = 'Confirmar pedido ✓';
+      renderResumen();
+    }
+
+    window.scrollTo(0, 0);
+  }
+
+  function navBack() {
+    if (paso > 1) irAPaso(paso - 1);
+  }
+
+  function navNext() {
+    if (paso === 1) {
+      abrirCarrito();
+    } else if (paso === 2) {
+      if (!entregaTipo) { mostrarToast('Elegí cómo recibir tu pedido'); return; }
+      if (entregaTipo === 'domicilio' && !document.getElementById('inputDireccion').value.trim()) {
+        document.getElementById('inputDireccion').classList.add('error');
+        mostrarToast('Ingresá tu dirección'); return;
+      }
+      irAPaso(3);
+    } else if (paso === 3) {
+      if (!pagoPid) { mostrarToast('Elegí un método de pago'); return; }
+      irAPaso(4);
+    } else if (paso === 4) {
+      confirmar();
+    }
+  }
+
+  // ==================== CONFIRMAR (SUPABASE) ====================
+  async function confirmar() {
+    const nombre = document.getElementById('inputNombre').value.trim();
+    const telefono = document.getElementById('inputTelefono').value.trim().replace(/\s/g, '');
+
+    if (!nombre) { mostrarToast('Ingresá tu nombre'); return; }
+    if (!telefono || telefono.length < 7) { mostrarToast('Ingresá un teléfono válido'); return; }
+
+    const btnNext = document.getElementById('btnNext');
+    btnNext.textContent = 'Enviando…';
+    btnNext.classList.add('loading');
+
+    try {
+      // 1. Buscar o crear cliente
+      let clienteId;
+      const clientes = await sbGet('clientes', `celular=eq.${encodeURIComponent(telefono)}&select=id`);
+
+      if (clientes && clientes.length > 0) {
+        clienteId = clientes[0].id;
+        await sbPatch('clientes', `id=eq.${clienteId}`, { nombre });
+      } else {
+        const nuevo = await sbPost('clientes', { nombre, celular: telefono });
+        if (!nuevo || nuevo.error) throw new Error(nuevo?.message || 'Error creando cliente');
+        clienteId = nuevo[0].id;
+      }
+
+      // 2. Calcular totales
+      const subtotal = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+      const envio = entregaTipo === 'domicilio' ? costoEnvio : 0;
+      const total = subtotal + envio;
+      const direccion = entregaTipo === 'domicilio' ? document.getElementById('inputDireccion').value.trim() : null;
+      const indicaciones = entregaTipo === 'domicilio' ? document.getElementById('inputIndicaciones').value.trim() : null;
+
+      // 3. Insertar pedido
+      const pedidoData = {
+        cliente_id: clienteId,
+        tipo_entrega: entregaTipo === 'recoger' ? 'presencial' : 'domicilio',
+        direccion_entrega: direccion || null,
+        notas: indicaciones || null,
+        metodo_pago_id: pagoPid,
+        costo_domicilio: envio,
+        total,
+        estado: 'nuevo',
+        pedido_origen: 'formulario_cliente'
+      };
+
+      const pedidos = await sbPost('pedidos', pedidoData);
+      if (!pedidos || pedidos.error) throw new Error(pedidos?.message || 'Error creando pedido');
+      const pedido = pedidos[0];
+
+      // 4. Insertar items
+      const items = carrito.map(i => ({
+        pedido_id: pedido.id,
+        producto_id: i.id,
+        cantidad: i.cantidad,
+        precio_unitario: i.precio,
+        subtotal: i.precio * i.cantidad
+      }));
+      const itemsRes = await sbPost('items_pedido', items);
+      if (!itemsRes || itemsRes.error) throw new Error(itemsRes?.message || 'Error guardando items');
+
+      // 5. Mostrar éxito
+      mostrarExito(pedido.numero_pedido || pedido.id);
+
+    } catch (err) {
+      console.error(err);
+      mostrarToast('Error enviando pedido. Intentá de nuevo.');
+      btnNext.textContent = 'Confirmar pedido ✓';
+      btnNext.classList.remove('loading');
+    }
+  }
+
+  function mostrarExito(numeroPedido) {
+    // Ocultar todo
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+    document.getElementById('stepsBar').style.display = 'none';
+    document.getElementById('navBar').style.display = 'none';
+    document.getElementById('cartBtn').style.display = 'none';
+
+    // Formato AM-XXXX
+    const num = typeof numeroPedido === 'number'
+      ? `AM-${String(numeroPedido).padStart(4, '0')}`
+      : numeroPedido;
+
+    document.getElementById('exitoNumero').textContent = num;
+
+    const msg = entregaTipo === 'domicilio'
+      ? 'Tu pedido está en cocina. Lo llevaremos a tu dirección cuando esté listo 🛵'
+      : 'Tu pedido está en cocina. Pasa a recogerlo cuando esté listo 🏠';
+    document.getElementById('exitoMsg').textContent = msg;
+
+    document.getElementById('seccionExito').classList.add('visible');
+    window.scrollTo(0, 0);
+  }
+
+  // ==================== TOAST ====================
+  function mostrarToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ==================== START ====================
+  init();
+</script>
+</body>
+</html>

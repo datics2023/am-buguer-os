@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1024">
+<title>AM Burguer — Cocina</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --rojo: #E63946;
+    --naranja: #F4A261;
+    --fondo: #111111;
+    --card: #1C1C1C;
+    --card2: #232323;
+    --border: #2E2E2E;
+    --verde: #2ECC71;
+    --amarillo: #F39C12;
+    --texto: #F0F0F0;
+    --muted: #888;
+    --prioritario: #F4A261;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: 'DM Sans', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: #161616;
+    border-bottom: 2px solid var(--rojo);
+    flex-shrink: 0;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--rojo);
+    letter-spacing: 2px;
+  }
+
+  .screen-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .live-clock {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    color: var(--texto);
+    letter-spacing: 2px;
+  }
+
+  .badge-cocina {
+    background: var(--naranja);
+    color: #111;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* MAIN LAYOUT */
+  main {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* === IZQUIERDA: COMANDAS === */
+  .comandas-panel {
+    padding: 16px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .panel-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--muted);
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .comandas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* TARJETA DE PEDIDO */
+  .comanda {
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: border-color 0.2s;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .comanda.prioritario {
+    border-color: var(--prioritario);
+    box-shadow: 0 0 0 1px var(--prioritario)22;
+  }
+
+  .comanda-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--card2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pedido-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--texto);
+    letter-spacing: 1px;
+  }
+
+  .pedido-tipo {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .tipo-presencial {
+    background: var(--naranja)22;
+    color: var(--naranja);
+    border: 1px solid var(--naranja)44;
+  }
+
+  .tipo-domicilio {
+    background: #3498DB22;
+    color: #5DADE2;
+    border: 1px solid #3498DB44;
+  }
+
+  .timer {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .timer.urgente { color: var(--rojo); }
+  .timer.normal { color: var(--verde); }
+  .timer.warning { color: var(--amarillo); }
+
+  .comanda-body {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .item-qty {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--rojo);
+    min-width: 28px;
+    line-height: 1;
+    padding-top: 1px;
+  }
+
+  .item-info {
+    flex: 1;
+  }
+
+  .item-nombre {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--texto);
+    line-height: 1.2;
+  }
+
+  .item-mods {
+    margin-top: 3px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .mod-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .mod-extra {
+    background: #2ECC7122;
+    color: var(--verde);
+    border: 1px solid #2ECC7133;
+  }
+
+  .mod-sin {
+    background: #E6394622;
+    color: #FF6B7A;
+    border: 1px solid #E6394633;
+  }
+
+  .comanda-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .notas-pedido {
+    font-size: 11px;
+    color: var(--amarillo);
+    font-style: italic;
+    flex: 1;
+  }
+
+  .btn-listo {
+    background: var(--verde);
+    color: #111;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .btn-listo:hover {
+    background: #27ae60;
+    transform: scale(1.03);
+  }
+
+  .btn-listo:active {
+    transform: scale(0.97);
+  }
+
+  .btn-listo:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .prioritario-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--prioritario);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* === DERECHA: RESUMEN INSUMOS === */
+  .resumen-panel {
+    border-left: 2px solid var(--border);
+    background: #161616;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .resumen-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .resumen-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--naranja);
+    letter-spacing: 2px;
+  }
+
+  .resumen-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .resumen-body {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .insumo-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .insumo-grupo-title {
+    font-size: 9px;
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .insumo-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .insumo-nombre {
+    font-size: 13px;
+    color: var(--texto);
+    font-weight: 500;
+  }
+
+  .insumo-qty {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--rojo);
+    line-height: 1;
+  }
+
+  .insumo-unit {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    text-align: right;
+  }
+
+  .insumo-right {
+    text-align: right;
+    line-height: 1.2;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--muted);
+    gap: 8px;
+  }
+
+  .empty-icon { font-size: 40px; }
+  .empty-text { font-size: 13px; font-family: 'DM Mono', monospace; }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--verde);
+    color: #111;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 28px;
+    border-radius: 10px;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .toast.error {
+    background: var(--rojo);
+    color: #fff;
+  }
+
+  /* Loading state */
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--muted);
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span class="logo">AM Burguer</span>
+    <span class="screen-label">// Pantalla de Cocina</span>
+  </div>
+  <div class="header-right">
+    <span class="badge-cocina" id="contadorActivo">— en cocina</span>
+<span class="live-clock" id="reloj">--:--:--</span>
+    <button onclick="cerrarSesion()" style="background:#7d0000;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600">Salir</button>
+  </div>
+</header>
+
+<main>
+  <div class="comandas-panel">
+    <div class="panel-title">Comandas activas — más antiguas primero</div>
+    <div class="comandas-list" id="listaComandas">
+      <div class="loading-state">Cargando pedidos...</div>
+    </div>
+  </div>
+
+  <div class="resumen-panel">
+    <div class="resumen-header">
+      <div class="resumen-title">Necesito preparar</div>
+      <div class="resumen-sub" id="resumenSub">—</div>
+    </div>
+    <div class="resumen-body" id="resumenBody"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="auth-guard.js"></script>
+<script>
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://ezvjjudhvothkiqyfxtl.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6dmpqdWRodm90aGtpcXlmeHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjk4ODYsImV4cCI6MjA5MDgwNTg4Nn0.rMLPardNjEIoXkvQIPRxAXjjATBKBUwnPm67oU1ZjM8';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ─── MAPA DE INSUMOS ──────────────────────────────────────────────────────────
+const insumosPor = {
+  'BBQ':         { carnes: 1, panes: 1, tocinetas: 1, quesos: 1 },
+  'Nueve 9':     { carnes: 1, panes: 1, tocinetas: 1, quesos: 1, pepperoni: 9 },
+  'Carne Doble': { carnes: 2, panes: 1, tocinetas: 1, quesos: 1 },
+  'Cheese':      { carnes: 1, panes: 1, tocinetas: 1, quesos: 1 },
+  'Mex':         { carnes: 1, panes: 1, tocinetas: 1, quesos: 1, nachos: 1 },
+  'Pollo':       { pollos: 1, panes: 1, tocinetas: 1, quesos: 1 },
+  'Hot Dog':     { salchichas: 1, panes: 1, papas_fr: 1 },
+  'Mr Dog':      { salchichas: 1, panes: 1, tocinetas: 1, quesos: 1, papas_chip: 1 },
+  'Choriperro':  { chorizos: 1, panes: 1, quesos: 1, papas_chip: 1 },
+  'Choripapa':   { pollos: 1, chorizos: 1, papas_criolla: 1, papas_chip: 1, quesos: 2 },
+  'Mazorcada':   { pollos: 1, chorizos: 1, mazorcas: 1, quesos: 1, papas_chip: 1 },
+  'Salchipapa':  { salchichas: 2.5, papas_fr: 1, papas_chip: 1 },
+  'Gaseosa':     {},
+  'Agua':        {},
+  'Jugo natural':{},
+};
+
+const insumoLabels = {
+  carnes:        { label: 'Carnes de res',        unit: 'unidades' },
+  pollos:        { label: 'Porciones de pollo',   unit: 'unidades' },
+  panes:         { label: 'Panes',                unit: 'unidades' },
+  tocinetas:     { label: 'Tocineta',             unit: 'porciones' },
+  quesos:        { label: 'Queso',                unit: 'porciones' },
+  salchichas:    { label: 'Salchichas americanas',unit: 'unidades' },
+  chorizos:      { label: 'Chorizos',             unit: 'unidades' },
+  papas_fr:      { label: 'Papa francesa',        unit: 'porciones' },
+  papas_chip:    { label: 'Papa chip',            unit: 'porciones' },
+  papas_criolla: { label: 'Papa criolla',         unit: 'porciones' },
+  mazorcas:      { label: 'Mazorca',              unit: 'unidades' },
+  nachos:        { label: 'Nachos',               unit: 'porciones' },
+  pepperoni:     { label: 'Pepperoni',            unit: 'rodajas' },
+};
+
+const insumoGrupos = {
+  'Proteínas': ['carnes', 'pollos', 'salchichas', 'chorizos'],
+  'Base':      ['panes', 'papas_fr', 'papas_chip', 'papas_criolla'],
+  'Extras':    ['tocinetas', 'quesos', 'nachos', 'pepperoni', 'mazorcas'],
+};
+
+// ─── ESTADO ───────────────────────────────────────────────────────────────────
+let pedidos = [];
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function formatTimer(ms) {
+  const safe = Math.max(0, ms);
+  const mins = Math.floor(safe / 60000);
+  const segs = Math.floor((safe % 60000) / 1000);
+  return `${String(mins).padStart(2,'0')}:${String(segs).padStart(2,'0')}`;
+}
+
+function timerClass(ms) {
+  const mins = Math.max(0, ms) / 60000;
+  if (mins >= 15) return 'urgente';
+  if (mins >= 8)  return 'warning';
+  return 'normal';
+}
+
+function mostrarToast(msg, esError = false) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast show' + (esError ? ' error' : '');
+  setTimeout(() => toast.className = 'toast', 2500);
+}
+
+// ─── CARGAR PEDIDOS DESDE SUPABASE ────────────────────────────────────────────
+async function cargarPedidos() {
+  const { data, error } = await sb
+    .from('pedidos')
+    .select(`
+      id,
+      numero_pedido,
+      tipo_entrega,
+      es_prioritario,
+      hora_cocina,
+      notas,
+      items_pedido (
+        cantidad,
+        extras,
+        exclusiones,
+        productos ( nombre )
+      )
+    `)
+    .eq('estado', 'en_cocina')
+    .order('hora_cocina', { ascending: true });
+
+  if (error) {
+    console.error('Error cargando pedidos:', error);
+    mostrarToast('Error cargando pedidos', true);
+    return;
+  }
+
+  // Normalizar al formato que usan renderComandas / renderResumen
+  pedidos = (data || []).map(p => ({
+    uuid: p.id,
+    id: `AM-${String(p.numero_pedido).slice(-4).padStart(4, '0')}`,
+    tipo: p.tipo_entrega,
+    prioritario: p.es_prioritario,
+    entrada: p.hora_cocina ? new Date(p.hora_cocina + '+00:00').getTime() : Date.now(),
+    notas: p.notas || '',
+    items: (p.items_pedido || []).map(i => ({
+      qty: i.cantidad,
+      nombre: i.productos?.nombre || '?',
+      extras: i.extras ? i.extras.split(',').map(s => s.trim()).filter(Boolean) : [],
+      exclusiones: i.exclusiones ? i.exclusiones.split(',').map(s => s.trim()).filter(Boolean) : [],
+    }))
+  }));
+
+  renderComandas();
+  renderResumen();
+}
+
+// ─── ACCIÓN: MARCAR LISTO ─────────────────────────────────────────────────────
+async function marcarListo(uuid, displayId) {
+  // Deshabilitar botón inmediatamente
+  const btn = document.querySelector(`[data-uuid="${uuid}"] .btn-listo`);
+  if (btn) btn.disabled = true;
+
+  const { error } = await sb
+    .from('pedidos')
+    .update({
+      estado: 'listo',
+      hora_listo: new Date().toISOString()
+    })
+    .eq('id', uuid);
+
+  if (error) {
+    console.error('Error marcando listo:', error);
+    mostrarToast('Error al marcar como listo', true);
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  // Animación de salida
+  const card = document.querySelector(`[data-uuid="${uuid}"]`);
+  if (card) {
+    card.style.transition = 'all 0.35s ease';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(30px)';
+  }
+  setTimeout(() => {
+    pedidos = pedidos.filter(p => p.uuid !== uuid);
+    renderComandas();
+    renderResumen();
+  }, 350);
+
+  mostrarToast(`✓ ${displayId} marcado como listo`);
+}
+
+// ─── RENDER COMANDAS ──────────────────────────────────────────────────────────
+function renderComandas() {
+  const container = document.getElementById('listaComandas');
+  const contador  = document.getElementById('contadorActivo');
+  contador.textContent = `${pedidos.length} en cocina`;
+
+  if (pedidos.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">🎉</span>
+        <span class="empty-text">Sin pedidos pendientes</span>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = pedidos.map(p => {
+    const elapsed = Date.now() - p.entrada;
+    const tc = timerClass(elapsed);
+
+    const itemsHTML = p.items.map(item => {
+      const extrasHTML = item.extras.map(e => `<span class="mod-tag mod-extra">+ ${e}</span>`).join('');
+      const sinHTML    = item.exclusiones.map(e => `<span class="mod-tag mod-sin">↯ ${e}</span>`).join('');
+      return `
+        <div class="item-row">
+          <span class="item-qty">${item.qty}×</span>
+          <div class="item-info">
+            <div class="item-nombre">${item.nombre}</div>
+            ${(item.extras.length || item.exclusiones.length) ? `<div class="item-mods">${extrasHTML}${sinHTML}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="comanda ${p.prioritario ? 'prioritario' : ''}" data-uuid="${p.uuid}" id="comanda-${p.id}">
+        <div class="comanda-header">
+          <span class="pedido-num">${p.id}</span>
+          ${p.prioritario ? '<span class="prioritario-badge">⚡ Prioritario</span>' : ''}
+          <span class="pedido-tipo ${p.tipo === 'presencial' ? 'tipo-presencial' : 'tipo-domicilio'}">
+            ${p.tipo === 'presencial' ? '🏃 Presencial' : '🛵 Domicilio'}
+          </span>
+          <span class="timer ${tc}" id="timer-${p.id}">${formatTimer(elapsed)}</span>
+        </div>
+        <div class="comanda-body">${itemsHTML}</div>
+        <div class="comanda-footer">
+          ${p.notas ? `<span class="notas-pedido">📝 ${p.notas}</span>` : '<span></span>'}
+          <button class="btn-listo" onclick="marcarListo('${p.uuid}', '${p.id}')">✓ Listo</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── RENDER INSUMOS ───────────────────────────────────────────────────────────
+function calcInsumos() {
+  const totales = {};
+  pedidos.forEach(p => {
+    p.items.forEach(item => {
+      const base = insumosPor[item.nombre] || {};
+      const qty  = item.qty;
+      const extraQueso    = item.extras.filter(e => e.toLowerCase().includes('queso')).length;
+      const extraTocineta = item.extras.filter(e => e.toLowerCase().includes('tocineta')).length;
+      Object.entries(base).forEach(([k, v]) => {
+        totales[k] = (totales[k] || 0) + v * qty;
+      });
+      if (extraQueso)    totales['quesos']    = (totales['quesos']    || 0) + extraQueso * qty;
+      if (extraTocineta) totales['tocinetas'] = (totales['tocinetas'] || 0) + extraTocineta * qty;
+    });
+  });
+  return totales;
+}
+
+function renderResumen() {
+  const totales = calcInsumos();
+  const body = document.getElementById('resumenBody');
+  const sub  = document.getElementById('resumenSub');
+
+  sub.textContent = `Para ${pedidos.length} pedido${pedidos.length !== 1 ? 's' : ''} activo${pedidos.length !== 1 ? 's' : ''}`;
+
+  if (pedidos.length === 0) {
+    body.innerHTML = `<div class="empty-state"><span class="empty-icon">✓</span><span class="empty-text">Todo despejado</span></div>`;
+    return;
+  }
+
+  let html = '';
+  Object.entries(insumoGrupos).forEach(([grupo, claves]) => {
+    const relevantes = claves.filter(k => totales[k] > 0);
+    if (!relevantes.length) return;
+    html += `<div class="insumo-grupo"><div class="insumo-grupo-title">${grupo}</div>`;
+    relevantes.forEach(k => {
+      const info = insumoLabels[k] || { label: k, unit: '' };
+      const val  = totales[k] % 1 === 0 ? totales[k] : totales[k].toFixed(1);
+      html += `
+        <div class="insumo-item">
+          <span class="insumo-nombre">${info.label}</span>
+          <div class="insumo-right">
+            <div class="insumo-qty">${val}</div>
+            <div class="insumo-unit">${info.unit}</div>
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+  });
+  body.innerHTML = html;
+}
+
+// ─── RELOJ Y TIMERS ───────────────────────────────────────────────────────────
+// Configuración de alertas (en minutos)
+const MIN_WARN = 10;
+const MIN_CRIT = 15;
+
+function actualizarReloj() {
+  const ahora = new Date();
+  const relojEl = document.getElementById('reloj');
+  if (relojEl) relojEl.textContent = ahora.toLocaleTimeString('es-CO', { hour12: false });
+
+  pedidos.forEach(p => {
+    const el = document.getElementById(`timer-${p.id}`);
+    if (!el) return;
+    
+    const elapsed = Math.max(0, Date.now() - p.entrada);
+    el.textContent = formatTimer(elapsed);
+    el.className = `timer ${timerClass(elapsed)}`;
+  });
+}
+
+// ─── REALTIME: escucha cambios en pedidos ─────────────────────────────────────
+function suscribirRealtime() {
+  sb.channel('cocina-pedidos')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'pedidos'
+    }, () => {
+      // Cualquier cambio en pedidos → recargar
+      cargarPedidos();
+    })
+    .subscribe();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+cargarPedidos();
+suscribirRealtime();
+setInterval(actualizarReloj, 1000);
+actualizarReloj();
+</script>
+</body>
+</html>

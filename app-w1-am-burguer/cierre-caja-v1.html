@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cierre de Caja — AM Burguer</title>
+<style>
+  :root {
+    --rojo: #E63946;
+    --naranja: #F4A261;
+    --fondo: #1D1D1D;
+    --tarjeta: #2A2A2A;
+    --texto: #FFFFFF;
+    --gris: #AAAAAA;
+    --verde: #2ECC71;
+    --amarillo: #F39C12;
+    --error: #E74C3C;
+    --azul: #3498DB;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  header {
+    background: #111;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 2px solid var(--rojo);
+  }
+
+  header h1 { font-size: 18px; font-weight: 700; }
+  header span { font-size: 13px; color: var(--gris); }
+
+  .container { padding: 16px; max-width: 480px; margin: 0 auto; }
+
+  /* Selector de fecha */
+  .fecha-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--tarjeta);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .fecha-bar label { font-size: 13px; color: var(--gris); white-space: nowrap; }
+  .fecha-bar input[type="date"] {
+    background: transparent;
+    border: none;
+    color: var(--texto);
+    font-size: 15px;
+    font-weight: 600;
+    flex: 1;
+    outline: none;
+  }
+  .fecha-bar button {
+    background: var(--rojo);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Tarjetas de resumen */
+  .resumen-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--tarjeta);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .stat-card.full { grid-column: 1 / -1; }
+  .stat-card .label { font-size: 12px; color: var(--gris); margin-bottom: 6px; }
+  .stat-card .valor { font-size: 24px; font-weight: 700; }
+  .stat-card .valor.verde { color: var(--verde); }
+  .stat-card .valor.naranja { color: var(--naranja); }
+  .stat-card .sub { font-size: 12px; color: var(--gris); margin-top: 4px; }
+
+  /* Secciones */
+  .seccion {
+    background: var(--tarjeta);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .seccion h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--naranja);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Métodos de pago */
+  .metodo-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #333;
+  }
+  .metodo-fila:last-child { border-bottom: none; }
+  .metodo-fila .nombre { font-size: 15px; }
+  .metodo-fila .monto { font-size: 15px; font-weight: 700; }
+  .metodo-fila .count { font-size: 12px; color: var(--gris); }
+
+  /* Fondo inicial */
+  .input-group { margin-bottom: 12px; }
+  .input-group label { font-size: 13px; color: var(--gris); display: block; margin-bottom: 6px; }
+  .input-group input {
+    width: 100%;
+    background: #1D1D1D;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: var(--texto);
+    font-size: 18px;
+    font-weight: 700;
+    padding: 12px 14px;
+    outline: none;
+  }
+  .input-group input:focus { border-color: var(--naranja); }
+
+  /* Calculadora billetes */
+  .billetes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .billete-item { text-align: center; }
+  .billete-item label { font-size: 11px; color: var(--gris); display: block; margin-bottom: 4px; }
+  .billete-item input {
+    width: 100%;
+    background: #1D1D1D;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: var(--texto);
+    font-size: 16px;
+    font-weight: 600;
+    padding: 10px 6px;
+    text-align: center;
+    outline: none;
+  }
+  .billete-item input:focus { border-color: var(--naranja); }
+
+  .total-efectivo {
+    background: #1D1D1D;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+  }
+  .total-efectivo span { font-size: 13px; color: var(--gris); }
+  .total-efectivo strong { font-size: 18px; color: var(--verde); }
+
+  /* Conciliación */
+  .conciliacion-fila {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #333;
+    font-size: 14px;
+  }
+  .conciliacion-fila:last-child { border-bottom: none; }
+  .conciliacion-fila .etiqueta { color: var(--gris); }
+
+  .alerta-descuadre {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    display: none;
+  }
+  .alerta-descuadre.ok { background: rgba(46,204,113,0.15); color: var(--verde); display: block; }
+  .alerta-descuadre.warn { background: rgba(231,76,60,0.15); color: var(--error); display: block; }
+
+  /* Gastos */
+  .gasto-form {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: end;
+  }
+  .gasto-form input, .gasto-form select {
+    background: #1D1D1D;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: var(--texto);
+    font-size: 14px;
+    padding: 10px 10px;
+    outline: none;
+    width: 100%;
+  }
+  .gasto-form input:focus, .gasto-form select:focus { border-color: var(--naranja); }
+  .gasto-form button {
+    background: var(--naranja);
+    color: #111;
+    border: none;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 10px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .gasto-lista { list-style: none; }
+  .gasto-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #333;
+    font-size: 14px;
+  }
+  .gasto-item:last-child { border-bottom: none; }
+  .gasto-item .desc { flex: 1; }
+  .gasto-item .cat { font-size: 11px; color: var(--gris); background: #333; border-radius: 4px; padding: 2px 6px; margin: 0 8px; }
+  .gasto-item .monto { color: var(--error); font-weight: 700; }
+  .gasto-item .del { background: none; border: none; color: #555; font-size: 16px; cursor: pointer; margin-left: 8px; }
+  .gasto-item .del:hover { color: var(--error); }
+
+  .total-gastos {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 10px;
+    margin-top: 4px;
+    font-weight: 700;
+    font-size: 15px;
+    border-top: 1px solid #444;
+  }
+
+  /* Acciones finales */
+  .acciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .btn-accion {
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-wa { background: #25D366; color: #fff; }
+  .btn-print { background: var(--azul); color: #fff; }
+
+  /* Loading */
+  .loading { text-align: center; padding: 40px; color: var(--gris); font-size: 14px; }
+
+  @media print {
+    header, .fecha-bar, .acciones, .gasto-form, .del { display: none !important; }
+    body { background: white; color: black; }
+    .seccion, .stat-card { background: #f5f5f5; border: 1px solid #ddd; }
+    .stat-card .valor.verde, .stat-card .valor.naranja { color: #333; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧾 Cierre de Caja</h1>
+<span id="hora-actual"></span>
+  <button onclick="cerrarSesion()" style="background:#7d0000;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600">Salir</button>
+</header>
+
+<div class="container">
+
+  <!-- Selector de fecha -->
+  <div class="fecha-bar">
+    <label>📅 Fecha</label>
+    <input type="date" id="fecha-input">
+    <button onclick="cargarDatos()">Ver</button>
+  </div>
+
+  <div id="contenido">
+    <div class="loading">Cargando datos...</div>
+  </div>
+
+</div>
+
+<script src="auth-guard.js"></script>
+<script>
+const SUPABASE_URL = 'https://ezvjjudhvothkiqyfxtl.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6dmpqdWRodm90aGtpcXlmeHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjk4ODYsImV4cCI6MjA5MDgwNTg4Nn0.rMLPardNjEIoXkvQIPRxAXjjATBKBUwnPm67oU1ZjM8';
+
+const BILLETES = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200];
+
+let gastosPendientes = []; // gastos añadidos localmente antes de guardar
+let datosGlobales = {};
+
+// Hora
+function actualizarHora() {
+  document.getElementById('hora-actual').textContent =
+    new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+}
+actualizarHora();
+setInterval(actualizarHora, 1000);
+
+// Fecha por defecto: hoy
+const hoy = new Date().toISOString().split('T')[0];
+document.getElementById('fecha-input').value = hoy;
+
+async function supabaseFetch(path) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      'apikey': ANON_KEY,
+      'Authorization': `Bearer ${ANON_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function supabasePost(path, body) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: 'POST',
+    headers: {
+      'apikey': ANON_KEY,
+      'Authorization': `Bearer ${ANON_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function supabaseDelete(path) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': ANON_KEY,
+      'Authorization': `Bearer ${ANON_KEY}`
+    }
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
+
+async function cargarDatos() {
+  const fecha = document.getElementById('fecha-input').value;
+  document.getElementById('contenido').innerHTML = '<div class="loading">Cargando datos...</div>';
+
+  try {
+    // 1. Usamos "hora creacion" con el filtro de rango (gte/lte) para cubrir el día completo
+    // 2. Mantenemos el Join para traer el nombre del método de pago
+    const pedidos = await supabaseFetch(
+      `pedidos?hora_creacion=gte.${fecha}T00:00:00&hora_creacion=lte.${fecha}T23:59:59&select=id,total,estado,metodo_pago:metodo_pago_id(nombre)`
+    );
+
+    // Gastos del día
+    const gastos = await supabaseFetch(`gastos?fecha=eq.${fecha}&select=*&order=created_at.asc`);
+
+    datosGlobales = { pedidos, gastos, fecha };
+    renderContenido();
+  } catch(e) {
+    document.getElementById('contenido').innerHTML =
+      `<div class="loading">Error cargando datos: ${e.message}</div>`;
+  }
+}
+
+function renderContenido() {
+  const { pedidos, gastos, fecha } = datosGlobales;
+
+  const pedidosValidos = pedidos.filter(p =>
+    ['pago_confirmado','en_cocina','listo','en_entrega','entregado'].includes(p.estado)
+  );
+
+  const totalVentas = pedidosValidos.length ? pedidosValidos.reduce((s, p) => s + (parseFloat(p.total) || 0), 0) : 0;
+  const ticketPromedio = pedidosValidos.length ? totalVentas / pedidosValidos.length : 0;
+
+  // Agrupar por método de pago (Ajustado para usar .nombre de la relación)
+  const porMetodo = {};
+  pedidosValidos.forEach(p => {
+    const m = p.metodo_pago?.nombre || 'Sin especificar';
+    if (!porMetodo[m]) porMetodo[m] = { total: 0, count: 0 };
+    porMetodo[m].total += parseFloat(p.total) || 0;
+    porMetodo[m].count++;
+  });
+
+  const ventasEfectivo = porMetodo['Efectivo']?.total || 0;
+  const totalGastos = gastos.reduce((s, g) => s + parseFloat(g.monto), 0);
+
+  const html = `
+    <div class="resumen-grid">
+      <div class="stat-card">
+        <div class="label">Total Ventas</div>
+        <div class="valor verde">${fmt(totalVentas)}</div>
+        <div class="sub">${pedidosValidos.length} pedidos</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Ticket Promedio</div>
+        <div class="valor naranja">${fmt(ticketPromedio)}</div>
+      </div>
+    </div>
+
+    <div class="seccion">
+      <h2>💳 Por Método de Pago</h2>
+      ${Object.entries(porMetodo).length === 0
+        ? '<p style="color:var(--gris);font-size:14px">Sin pedidos registrados</p>'
+        : Object.entries(porMetodo).map(([m, d]) => `
+          <div class="metodo-fila">
+            <div>
+              <div class="nombre">${m}</div>
+              <div class="count">${d.count} pedido${d.count !== 1 ? 's' : ''}</div>
+            </div>
+            <div class="monto">${fmt(d.total)}</div>
+          </div>
+        `).join('')
+      }
+    </div>
+
+    <div class="seccion">
+      <h2>💵 Conciliación de Efectivo</h2>
+      <div class="input-group">
+        <label>Fondo inicial en caja</label>
+        <input type="number" id="fondo-inicial" placeholder="0" value="0" oninput="recalcular()">
+      </div>
+      <div class="input-group">
+        <label>Monto total efectivo contado</label>
+        <input type="number" id="efectivo-fisico" placeholder="Ingresa total en caja" value="0" oninput="recalcular()">
+      </div>
+      <div class="total-efectivo">
+        <span>Total reportado</span>
+        <strong id="total-contado">${fmt(0)}</strong>
+      </div>
+    </div>
+
+    <div class="seccion" id="seccion-validacion">
+      <h2>✅ Validación</h2>
+      <div class="conciliacion-fila">
+        <span class="etiqueta">Ventas en efectivo</span>
+        <span id="val-ventas-efectivo">${fmt(ventasEfectivo)}</span>
+      </div>
+      <div class="conciliacion-fila">
+        <span class="etiqueta">+ Fondo inicial</span>
+        <span id="val-fondo">+ ${fmt(0)}</span>
+      </div>
+      <div class="conciliacion-fila">
+        <span class="etiqueta">- Gastos en efectivo</span>
+        <span style="color:var(--error)" id="val-gastos">- ${fmt(totalGastos)}</span>
+      </div>
+      <div class="conciliacion-fila" style="font-weight:700;font-size:15px">
+        <span class="etiqueta">Esperado en caja</span>
+        <span id="val-esperado">${fmt(ventasEfectivo - totalGastos)}</span>
+      </div>
+      <div class="conciliacion-fila" style="font-weight:700;font-size:15px">
+        <span class="etiqueta">Contado en caja</span>
+        <span id="val-contado">${fmt(0)}</span>
+      </div>
+      <div class="conciliacion-fila" style="font-weight:700;font-size:16px">
+        <span class="etiqueta">Diferencia</span>
+        <span id="val-diferencia">${fmt(0)}</span>
+      </div>
+      <div class="alerta-descuadre" id="alerta-descuadre"></div>
+    </div>
+
+    <div class="seccion">
+      <h2>📦 Gastos del Día</h2>
+      <div class="gasto-form">
+        <input type="text" id="gasto-desc" placeholder="Descripción">
+        <input type="number" id="gasto-monto" placeholder="$" style="width:90px">
+        <select id="gasto-cat" style="width:100px">
+          <option value="insumos">Insumos</option>
+          <option value="hielo">Hielo</option>
+          <option value="otro">Otro</option>
+        </select>
+        <button onclick="agregarGasto()">+</button>
+      </div>
+      <ul class="gasto-lista" id="gasto-lista">
+        ${gastos.map(g => gastoHTML(g)).join('')}
+        ${gastos.length === 0 ? '<li style="color:var(--gris);font-size:14px;padding:8px 0">Sin gastos registrados</li>' : ''}
+      </ul>
+      <div class="total-gastos">
+        <span>Total gastos</span>
+        <span id="total-gastos-label" style="color:var(--error)">${fmt(totalGastos)}</span>
+      </div>
+    </div>
+
+    <div class="acciones">
+      <button class="btn-accion btn-wa" onclick="exportarWhatsApp()">
+        <span style="font-size:22px">📲</span> WhatsApp
+      </button>
+      <button class="btn-accion btn-print" onclick="window.print()">
+        <span style="font-size:22px">🖨️</span> Imprimir
+      </button>
+    </div>
+  `;
+
+  document.getElementById('contenido').innerHTML = html;
+  window._ventasEfectivo = ventasEfectivo;
+  recalcular();
+}
+
+function gastoHTML(g) {
+  return `<li class="gasto-item" data-id="${g.id}">
+    <span class="desc">${g.descripcion}</span>
+    <span class="cat">${g.categoria}</span>
+    <span class="monto">-${fmt(g.monto)}</span>
+    <button class="del" onclick="eliminarGasto('${g.id}')">✕</button>
+  </li>`;
+}
+
+function recalcular() {
+  // Ahora leemos directamente el valor del input de monto total
+  const contado = parseFloat(document.getElementById('efectivo-fisico')?.value) || 0;
+  const fondo = parseFloat(document.getElementById('fondo-inicial')?.value) || 0;
+  
+  const totalGastos = calcularTotalGastosDOM();
+
+  const esperado = (window._ventasEfectivo || 0) + fondo - totalGastos;
+  const diferencia = contado - esperado;
+  const pct = esperado !== 0 ? Math.abs(diferencia / esperado) * 100 : 0;
+
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+  set('total-contado', fmt(contado));
+  set('val-fondo', `+ ${fmt(fondo)}`);
+  set('val-gastos', `- ${fmt(totalGastos)}`);
+  set('val-esperado', fmt(esperado));
+  set('val-contado', fmt(contado));
+  set('val-diferencia', (diferencia >= 0 ? '+' : '') + fmt(diferencia));
+  set('total-gastos-label', fmt(totalGastos));
+
+  const alerta = document.getElementById('alerta-descuadre');
+  if (alerta) {
+    if (pct > 5) {
+      alerta.className = 'alerta-descuadre warn';
+      alerta.textContent = `⚠️ Descuadre del ${pct.toFixed(1)}% — Revisar caja`;
+    } else {
+      alerta.className = 'alerta-descuadre ok';
+      alerta.textContent = `✓ Caja cuadrada (diferencia ${pct.toFixed(1)}%)`;
+    }
+  }
+}
+
+function calcularTotalGastosDOM() {
+  let total = 0;
+  document.querySelectorAll('.gasto-item .monto').forEach(el => {
+    total += parseFloat(el.textContent.replace(/[^0-9.]/g, '')) || 0;
+  });
+  return total;
+}
+
+async function agregarGasto() {
+  const desc = document.getElementById('gasto-desc').value.trim();
+  const monto = parseFloat(document.getElementById('gasto-monto').value);
+  const cat = document.getElementById('gasto-cat').value;
+  const fecha = document.getElementById('fecha-input').value;
+
+  if (!desc || !monto) return alert('Completa descripción y monto');
+
+  try {
+    const [gasto] = await supabasePost('gastos', { descripcion: desc, monto, categoria: cat, fecha });
+    datosGlobales.gastos.push(gasto);
+
+    const lista = document.getElementById('gasto-lista');
+    // Quitar mensaje vacío si existe
+    const vacio = lista.querySelector('li:not(.gasto-item)');
+    if (vacio) vacio.remove();
+
+    lista.insertAdjacentHTML('beforeend', gastoHTML(gasto));
+    document.getElementById('gasto-desc').value = '';
+    document.getElementById('gasto-monto').value = '';
+    recalcular();
+  } catch(e) {
+    alert('Error guardando gasto: ' + e.message);
+  }
+}
+
+async function eliminarGasto(id) {
+  try {
+    await supabaseDelete(`gastos?id=eq.${id}`);
+    document.querySelector(`.gasto-item[data-id="${id}"]`)?.remove();
+    datosGlobales.gastos = datosGlobales.gastos.filter(g => g.id !== id);
+    recalcular();
+  } catch(e) {
+    alert('Error eliminando gasto: ' + e.message);
+  }
+}
+
+function exportarWhatsApp() {
+  const { pedidos, gastos, fecha } = datosGlobales;
+  const pedidosValidos = pedidos.filter(p =>
+    ['pago_confirmado','en_cocina','listo','en_entrega','entregado'].includes(p.estado)
+  );
+  const totalVentas = pedidosValidos.reduce((s, p) => s + (parseFloat(p.total) || 0), 0);
+  const ticket = pedidosValidos.length ? totalVentas / pedidosValidos.length : 0;
+  const totalGastos = gastos.reduce((s, g) => s + parseFloat(g.monto), 0);
+
+  const porMetodo = {};
+  pedidosValidos.forEach(p => {
+    const m = p.metodo_pago || 'Sin especificar';
+    if (!porMetodo[m]) porMetodo[m] = 0;
+    porMetodo[m] += parseFloat(p.total) || 0;
+  });
+
+  const metodosTxt = Object.entries(porMetodo)
+    .map(([m, t]) => `  • ${m}: ${fmt(t)}`).join('\n');
+
+  const gastosTxt = gastos.length
+    ? gastos.map(g => `  • ${g.descripcion} (${g.categoria}): ${fmt(g.monto)}`).join('\n')
+    : '  • Sin gastos';
+
+  const fondo = parseFloat(document.getElementById('fondo-inicial')?.value) || 0;
+  const contadoTxt = document.getElementById('total-contado')?.textContent || '$0';
+  const diferenciaTxt = document.getElementById('val-diferencia')?.textContent || '$0';
+
+  const texto = `🍔 *CIERRE DE CAJA — AM BURGUER*
+📅 ${fecha}
+
+📊 *VENTAS*
+  Total: ${fmt(totalVentas)}
+  Pedidos: ${pedidosValidos.length}
+  Ticket prom: ${fmt(ticket)}
+
+💳 *POR MÉTODO DE PAGO*
+${metodosTxt}
+
+📦 *GASTOS*
+${gastosTxt}
+  Total gastos: ${fmt(totalGastos)}
+
+💵 *CONCILIACIÓN EFECTIVO*
+  Fondo inicial: ${fmt(fondo)}
+  Total contado: ${contadoTxt}
+  Diferencia: ${diferenciaTxt}`;
+
+  const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+  window.open(url, '_blank');
+}
+
+function fmt(n) {
+  return '$' + Math.round(n).toLocaleString('es-CO');
+}
+
+function fmtCorto(n) {
+  if (n >= 1000) return '$' + (n/1000) + 'k';
+  return '$' + n;
+}
+
+// Carga inicial
+cargarDatos();
+</script>
+</body>
+</html>
