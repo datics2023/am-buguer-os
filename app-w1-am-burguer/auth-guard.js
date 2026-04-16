@@ -21,7 +21,14 @@
       }
     });
 
-    if (!res.ok) throw new Error('No session');
+    if (!res.ok) {
+      // Intentar refresh antes de redirigir
+      const refreshed = await tryRefresh();
+      if (!refreshed) throw new Error('No session');
+      // Recargar con token nuevo
+      window.location.reload();
+      return;
+    }
 
     const user = await res.json();
     if (!user || !user.id) throw new Error('No user');
@@ -72,6 +79,40 @@
       return parsed.access_token || '';
     } catch {
       return '';
+    }
+  }
+
+  async function tryRefresh() {
+    try {
+      const raw = localStorage.getItem(
+        `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`
+      );
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      const refreshToken = parsed.refresh_token;
+      if (!refreshToken) return false;
+
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (!data.access_token) return false;
+
+      // Guardar nuevo token
+      localStorage.setItem(
+        `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`,
+        JSON.stringify(data)
+      );
+      return true;
+    } catch {
+      return false;
     }
   }
 })();
