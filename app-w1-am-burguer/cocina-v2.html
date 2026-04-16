@@ -774,6 +774,8 @@ function actualizarReloj() {
 }
 
 // ─── REALTIME: escucha cambios en pedidos ─────────────────────────────────────
+let reloadTimeout = null;
+
 function suscribirRealtime() {
   sb.channel('cocina-pedidos')
     .on('postgres_changes', {
@@ -781,8 +783,9 @@ function suscribirRealtime() {
       schema: 'public',
       table: 'pedidos'
     }, () => {
-      // Cualquier cambio en pedidos → recargar
-      cargarPedidos();
+      // Debounce: colapsa ráfagas de eventos en una sola recarga
+      clearTimeout(reloadTimeout);
+      reloadTimeout = setTimeout(cargarPedidos, 800);
     })
     .subscribe();
 }
